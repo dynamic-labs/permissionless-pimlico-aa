@@ -1,25 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
+import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import Main from "./Main";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+
+const App = () => (
+  <DynamicContextProvider
+    theme="auto"
+    settings={{
+      environmentId: process.env.REACT_APP_DYNAMIC_ENVIRONMENT_ID,
+      walletConnectors: [EthereumWalletConnectors],
+    }}
+  >
+    <Main />
+  </DynamicContextProvider>
+);
 
 export default App;

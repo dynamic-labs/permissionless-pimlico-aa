@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@dynamic-labs/ethereum": "3.7.0",
+    "@dynamic-labs/sdk-react-core": "3.7.0",
+    "permissionless": "^0.2.18",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "viem": "*"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -34,5 +34,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "web-vitals": "^2.1.4"
+  },
+  "overrides": {
+    "typescript": "4.9.5"
   }
 }

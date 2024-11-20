@@ -125,7 +125,7 @@ const Main = () => {
       // Wait for transaction receipt (optional)
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       console.log("Transaction receipt:", receipt);
-      alert("Transaction sent successfully!");
+      alert(`Transaction sent successfully! Hash: ${txHash}`);
     } catch (error) {
       console.error("Error sending transaction:", error);
       alert("Failed to send transaction. Please try again.");

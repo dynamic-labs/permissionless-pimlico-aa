@@ -9,17 +9,20 @@ import {
 import { toEcdsaKernelSmartAccount } from "permissionless/accounts";
 import { http } from "viem";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
-import { polygonAmoy, baseSepolia } from "viem/chains";
+import { polygonAmoy, baseSepolia, optimismSepolia, sepolia, } from "viem/chains";
 import { entryPoint07Address } from "viem/account-abstraction";
 import { parseEther } from "viem";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
+
 
 const checkIsDarkSchemePreferred = () =>
   window?.matchMedia?.("(prefers-color-scheme:dark)")?.matches ?? false;
 
 const networkMap = {
   [baseSepolia.id]: baseSepolia,
-  [polygonAmoy.id]: polygonAmoy,
+  //[polygonAmoy.id]: polygonAmoy,
+  // [optimismSepolia.id]: optimismSepolia,
+  [sepolia.id]: sepolia,
 };
 
 const Main = () => {
@@ -33,6 +36,8 @@ const Main = () => {
   const [disableSendTransaction, setDisableSendTransaction] = useState(true);
   const [disableInitializeClients, setDisableInitializeClients] = useState(false);
   const API_KEY = process.env.REACT_APP_PIMLICO_API_KEY;
+  const [ sendingTransaction, setSendingTransaction ] = useState(false);
+  const [ toAddress, setToAddress ] = useState("");
 
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -84,7 +89,7 @@ const Main = () => {
         chain: selectedNetwork,
         bundlerTransport: http(pimlicoUrl),
         paymasterContext: {
-          sponsorshipPolicyId: "sp_dry_dreaming_celestial",
+          sponsorshipPolicyId: "sp_cynical_speed",
         },
         userOperation: {
           estimateFeesPerGas: async () =>
@@ -108,20 +113,22 @@ const Main = () => {
       console.error("SmartAccountClient or KernelAccount is not initialized!");
       return;
     }
-
+  
     try {
+      setSendingTransaction(true); // Show the spinner
+  
       const transaction = {
-        to: "0xcC90c7c3E3Ad6e4E6bd8CF4fB10D09edC20a9506", // Replace with recipient address
+        to: toAddress, // Replace with recipient address
         value: parseEther("0.0001"), // 0.0001 ETH
         data: "0x", // No calldata
       };
-
+  
       console.log("Sending transaction:", transaction);
-
+  
       // Send transaction
       const txHash = await smartAccountClient.sendTransaction(transaction);
       console.log("Transaction sent! Hash:", txHash);
-
+  
       // Wait for transaction receipt (optional)
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       console.log("Transaction receipt:", receipt);
@@ -129,76 +136,117 @@ const Main = () => {
     } catch (error) {
       console.error("Error sending transaction:", error);
       alert("Failed to send transaction. Please try again.");
-    } 
-    finally {
-      setDisableInitializeClients(false); // Re-enable button after initialization
-  };
+    } finally {
+      setSendingTransaction(false); 
+      setDisableInitializeClients(false); // Re-enable the initialize button
+    }
   };
 
   return (
     <div className={`container ${isDarkMode ? "dark" : "light"}`}>
-      <div className="header">
+      <header className="header">
         <img
           className="logo"
           src={isDarkMode ? "/logo-light.png" : "/logo-dark.png"}
-          alt="dynamic"
+          alt="Dynamic Logo"
         />
         <div className="header-buttons">
           <button
-            className="docs-button"
+            className="btn docs-button"
             onClick={() => window.open("https://docs.dynamic.xyz", "_blank", "noopener,noreferrer")}
           >
             Docs
           </button>
           <button
-            className="get-started"
+            className="btn get-started"
             onClick={() => window.open("https://app.dynamic.xyz", "_blank", "noopener,noreferrer")}
           >
-            Get started
+            Get Started
           </button>
         </div>
-      </div>
-      <div className="modal">
+      </header>
+  
+      {/* Main Content Section */}
+      <main className="modal">
         <DynamicWidget />
         <DynamicMethods isDarkMode={isDarkMode} />
-        <div className="network-selection">
-          <label htmlFor="network-select">Choose Network:</label>
-          <select
-            id="network-select"
-            onChange={(e) =>
-              setSelectedNetwork(networkMap[Number(e.target.value)])
-            }
-            defaultValue={polygonAmoy.id}
-          >
-            <option value={baseSepolia.id}>Base Sepolia</option>
-            <option value={polygonAmoy.id}>Polygon Amoy</option>
-          </select>
-        </div>
-        <button
-          className="btn btn-secondary"
-          onClick={initializeClients}
-          disabled={disableInitializeClients}
-        >
-          Initialize Clients
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={handleSendTransaction}
-          disabled={disableSendTransaction}
-        >
-          Send Sponsored Transaction
-        </button>
-      </div>
-      <div className="footer">
-        <div className="footer-text">Made with ❤️ by dynamic</div>
+  
+        {isLoggedIn ? (
+          <div className="user-actions">
+            <div className="network-selection">
+              <label htmlFor="network-select" className="network-label"><b>Choose Network:  </b></label>
+              <select
+                id="network-select"
+                className="network-dropdown"
+                onChange={(e) => setSelectedNetwork(networkMap[Number(e.target.value)])}
+                defaultValue={polygonAmoy.id}
+              >
+                <option value={baseSepolia.id}>Base Sepolia</option>
+                {/* <option value={polygonAmoy.id}>Polygon Amoy</option>
+                <option value={optimismSepolia.id}>Optimism Sepolia</option> */}
+                <option value={sepolia.id}>Sepolia</option>
+              </select>
+            </div>
+            <br/>
+            <label htmlFor="enter-address" className="network-label"><b>Enter To Address:  </b> </label>
+
+            <input
+              id="toAddress"
+              className="user-actions"
+              onChange={(e) => setToAddress(e.target.value)}
+              placeholder="Enter To Address"
+            />
+            <br/>
+            <br/>
+
+            <label htmlFor="enter-address" className="network-label"><b>Click to Initialize clients  </b> </label>
+            <div className="action-buttons">
+              <button
+                className="btn btn-primary"
+                onClick={initializeClients}
+                disabled={disableInitializeClients}
+              >
+                Initialize Clients
+              </button>
+              <br/>
+
+              {sendingTransaction ? (
+                <div className="spinner">
+                  <span>sending transaction...</span>
+                </div>
+              ) : (
+                <>
+                <label htmlFor="enter-address" className="network-label"><b>Click to Send Transaction:  </b> </label>
+                <br/>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSendTransaction}
+                  disabled={disableSendTransaction}
+                >
+                  Send Sponsored Transaction
+                </button>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="login-prompt">Please log in to get started.</p>
+        )}
+      </main>
+  
+      {/* Footer Section */}
+      <footer className="footer">
+        <p className="footer-text">Made with ❤️ by Dynamic</p>
         <img
           className="footer-image"
           src={isDarkMode ? "/image-dark.png" : "/image-light.png"}
-          alt="dynamic"
+          alt="Dynamic Footer"
         />
-      </div>
+      </footer>
     </div>
   );
-};
+
+}
+  
 
 export default Main;

@@ -6,11 +6,11 @@ import {
   createSmartAccountClient,
   walletClientToSmartAccountSigner,
 } from "permissionless";
-import { toEcdsaKernelSmartAccount, toSimpleSmartAccount } from "permissionless/accounts";
-import { createPublicClient, http } from "viem";
+import { toEcdsaKernelSmartAccount } from "permissionless/accounts";
+import { http } from "viem";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { polygonAmoy, baseSepolia } from "viem/chains";
-import { createPaymasterClient, entryPoint07Address } from "viem/account-abstraction";
+import { entryPoint07Address } from "viem/account-abstraction";
 import { parseEther } from "viem";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 
@@ -19,19 +19,20 @@ const checkIsDarkSchemePreferred = () =>
 
 const networkMap = {
   [baseSepolia.id]: baseSepolia,
-  [polygonAmoy.id]: polygonAmoy
-}
+  [polygonAmoy.id]: polygonAmoy,
+};
 
 const Main = () => {
   const isLoggedIn = useIsLoggedIn();
   const { primaryWallet } = useDynamicContext();
   const [isDarkMode, setIsDarkMode] = useState(checkIsDarkSchemePreferred);
+  const [selectedNetwork, setSelectedNetwork] = useState(polygonAmoy); // Default network
   const [publicClient, setPublicClient] = useState(null);
   const [smartAccountClient, setSmartAccountClient] = useState(null);
   const [kernelAccount, setKernelAccount] = useState(null);
   const [disableSendTransaction, setDisableSendTransaction] = useState(true);
+  const [disableInitializeClients, setDisableInitializeClients] = useState(false);
   const API_KEY = process.env.REACT_APP_PIMLICO_API_KEY;
-
 
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -48,15 +49,17 @@ const Main = () => {
     try {
       console.log("Initializing clients...");
 
+      setDisableInitializeClients(true); // Disable button during initialization
+
       // Initialize the public client
       const publicC = await primaryWallet.getPublicClient();
       const walletClient = await primaryWallet.getWalletClient();
       setPublicClient(publicC);
 
       // Initialize Pimlico client
-      const pimlicoUrl = `https://api.pimlico.io/v2/${baseSepolia.id}/rpc?apikey=${API_KEY}`;
+      const pimlicoUrl = `https://api.pimlico.io/v2/${selectedNetwork.id}/rpc?apikey=${API_KEY}`;
       const pimlicoClient = createPimlicoClient({
-        chain: baseSepolia.id,
+        chain: selectedNetwork.id,
         transport: http(pimlicoUrl),
         entryPoint: {
           address: entryPoint07Address,
@@ -78,7 +81,7 @@ const Main = () => {
       // Initialize the smart account client
       const smartClient = createSmartAccountClient({
         account: kernelSmartAccount,
-        chain: baseSepolia,
+        chain: selectedNetwork,
         bundlerTransport: http(pimlicoUrl),
         paymasterContext: {
           sponsorshipPolicyId: "sp_dry_dreaming_celestial",
@@ -97,13 +100,9 @@ const Main = () => {
     } catch (error) {
       console.error("Error initializing clients:", error);
       alert("Failed to initialize clients. Please try again.");
-    }
+      setDisableInitializeClients(false); // Re-enable if initialization fails
+    } 
   };
-
-  useEffect(() => {
-    initializeClients();
-  }, [primaryWallet]);
-
   const handleSendTransaction = async () => {
     if (!smartAccountClient || !kernelAccount) {
       console.error("SmartAccountClient or KernelAccount is not initialized!");
@@ -130,7 +129,10 @@ const Main = () => {
     } catch (error) {
       console.error("Error sending transaction:", error);
       alert("Failed to send transaction. Please try again.");
-    }
+    } 
+    finally {
+      setDisableInitializeClients(false); // Re-enable button after initialization
+  };
   };
 
   return (
@@ -159,9 +161,23 @@ const Main = () => {
       <div className="modal">
         <DynamicWidget />
         <DynamicMethods isDarkMode={isDarkMode} />
+        <div className="network-selection">
+          <label htmlFor="network-select">Choose Network:</label>
+          <select
+            id="network-select"
+            onChange={(e) =>
+              setSelectedNetwork(networkMap[Number(e.target.value)])
+            }
+            defaultValue={polygonAmoy.id}
+          >
+            <option value={baseSepolia.id}>Base Sepolia</option>
+            <option value={polygonAmoy.id}>Polygon Amoy</option>
+          </select>
+        </div>
         <button
           className="btn btn-secondary"
           onClick={initializeClients}
+          disabled={disableInitializeClients}
         >
           Initialize Clients
         </button>

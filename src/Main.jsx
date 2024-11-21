@@ -43,9 +43,7 @@ const Main = () => {
     });
 
     dynamicEvents.on("primaryWalletNetworkChanged", (newNetwork) => {
-      console.log("primaryWalletNetworkChanged was called", newNetwork);
       setSelectedNetwork(newNetwork);
-      console.log("Selected network updated:", newNetwork);
     });
   }, []);
 
